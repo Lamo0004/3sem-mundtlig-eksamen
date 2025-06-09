@@ -223,7 +223,7 @@ export default function EventInformation({ date, location, period, defaultData =
         {artworkToast && <div className="fixed bottom-6 right-6 bg-[#6b5f6e] text-white px-4 py-2 rounded shadow-lg z-50 transition-all">{artworkToast}</div>}
       </div>
       <div className="flex justify-end">
-        <button className="group inline-block text-[#C4FF00] cursor-pointer" onClick={handleMakeNewEvent} disabled={!eventName || !eventDescription || selectedArtworks.length === 0}>
+        <button className="group inline-block text-[#C4FF00] cursor-pointer" onClick={handleMakeNewEvent}>
           <span className="inline-flex flex-col">
             <span className="text-4xl font-bold px-8">{mode === "edit" ? "Gem ændringer" : "Opret event"}</span>
             <Image src={arrowLong} alt="pil" className="self-end transition-transform group-hover:translate-x-1 group-disabled:translate-x-0" />
