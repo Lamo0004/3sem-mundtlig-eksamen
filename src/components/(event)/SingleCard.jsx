@@ -43,7 +43,7 @@ const SingleCard = ({ eventData }) => {
         };
       });
   
-    addToCart(ticketsToAdd); // Dette sender alle valgte billetter samlet
+    addToCart(ticketsToAdd); // Dette sender alle valgte billetter samlet (Zustand funktionen kaldes her (addToCart))
   };
 
   return (

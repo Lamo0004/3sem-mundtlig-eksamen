@@ -12,27 +12,37 @@ import { updateTickets } from "@/api/events";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+//Komponenten "Basket"
 const Basket = () => {
+
+  //STATE OG HOOKS:
   const router = useRouter();
+  //Henter produkter (billetter) og en metode til at rydde kurven fra global state
   const items = useCartStore((state) => state.items);
   const clearCart = useCartStore((state) => state.clearCart);
 
+  //Opsætter lokale states til brugerens info og popup-beskeder.
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
   const [popupMessage, setPopupMessage] = useState("");
 
+  //HANDLEBUYCLICK-FUNKTION:
+  //Funktion "handleByClick" der kaldes, når brugeren klikker på "Køb billetter".
   const handleBuyClick = async () => {
+    //Hvis kurven er tom, vis popup-besked og stop
     if (items.length === 0) {
       setPopupMessage("Du har ikke valgt nogen billetter!");
       return;
     }
 
+    //Hvis brugerinfo mangler, vis popup og stop.
     if (!name || !email || !address) {
       setPopupMessage("Udfyld venligst navn, e-mail og adresse.");
       return;
     }
 
+    //For hvert produkt i kurven: send antal billetter til backend for at opdatere tilgængelighed
     try {
       for (const item of items) {
         const qty = Number(item.quantity) || 0;
@@ -42,8 +52,10 @@ const Basket = () => {
         });
       }
 
+      //Udregner total antal billetter.
       const totalTickets = items.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
 
+      //Samler kvitteringsdata
       const receiptData = {
         items,
         totalTickets: totalTickets,
@@ -53,7 +65,7 @@ const Basket = () => {
         timestamp: new Date().toISOString(),
       };
 
-      // Gem kvittering
+      // Gemmer kvitteringsdata i browserens sessionStorage
       sessionStorage.setItem("receipt", JSON.stringify(receiptData));
 
       // Ryd kurv efter kvittering er gemt
@@ -61,9 +73,10 @@ const Basket = () => {
         clearCart();
       }
 
-      // Gå til kvitteringsside
+      // Navigerer brugeren til kvitteringssiden.
       router.push("/receipt");
     } catch (error) {
+      //Viser en alert, hvis der sker en fejl.
       alert("Der skete en fejl under købet. Prøv igen.");
     }
   };
@@ -103,6 +116,7 @@ const Basket = () => {
 
               {items.length === 0 ? <p className="text-gray-600">Du har ikke valgt nogle billetter...</p> : <Price />}
 
+              {/* Formularfelter til navn, email og adresse. Alle styres af state og opdateres via onChange */}
               <div className="space-y-3 mt-6">
                 <h4 className="font-bold">Dine informationer</h4>
                 <label className="text-sm font-medium">Navn</label>
@@ -121,6 +135,7 @@ const Basket = () => {
             </div>
           </div>
         </main>
+        {/* Hvis der er en popup-besked, vis Popup-komponenten og giv en funktion til at lukke den. */}
         {popupMessage && <Popup message={popupMessage} onClose={() => setPopupMessage("")} />}
       </div>
     </div>

@@ -21,7 +21,7 @@ export default function EventInformation({ date, location, period, defaultData =
   const [filteredArtworks, setFilteredArtworks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(""); //Toast effekt
-  const [showPopup, setShowPopup] = useState(false);
+  const [showPopup, setShowPopup] = useState(false); //Popup (fslse) fordi den er skjult
 
   const router = useRouter();
   const { user } = useUser(); //giver adgang til allerede loggede ind brugere.
@@ -31,11 +31,14 @@ export default function EventInformation({ date, location, period, defaultData =
   const [selectedArtworks, setSelectedArtworks] = useState(defaultData.artworkIds || []);
   const tooManyArtworks = selectedArtworks.length > location?.maxArtworks;
 
+  // selectedArtworks er kun en liste af object_number
+  // Her laver vi en liste med de fulde værk-objekter fra allArtworks
+  // Så vi kan vise fx billede, titel og kunstner op de valgte værker.
   const selectedArtworksFull = allArtworks.filter((art) => selectedArtworks.includes(art.object_number));
 
-  // Hent alle værker én gang og sættes i allArtworks
+  // Hent alle værker én gang når komponenten loader og sættes i allArtworks
   useEffect(() => {
-    setLoading(true);
+    setLoading(true); //viser "loading" mens der hentes
     getArts()
       .then((data) => setAllArtworks(data))
       .catch(() => {
@@ -44,31 +47,41 @@ export default function EventInformation({ date, location, period, defaultData =
       .finally(() => setLoading(false));
   }, []);
 
-  // Filtrer værker, når perioden ændrer sig
+  //Når burgeren vælger en periode, eller når kunstværker er hentet
+  // Filtrer kunstværker, så vi kun viser dem der hører til  perioden
   useEffect(() => {
-    if (!period || allArtworks.length === 0) return;
+    if (!period || allArtworks.length === 0) return;   // Hvis der ikke er valgt periode eller ingen værker endnu -> gør ingenting
     const filtered = filterArtworksByPeriod(allArtworks, period);
-    setFilteredArtworks(filtered);
+    setFilteredArtworks(filtered); // Gem filtrerede værker til visning.
   }, [period, allArtworks]);
 
   // Filtrer kunstværker yderligere efter tilgængelighed ift. events på samme dato
   useEffect(() => {
     const filterArtworksByAvailability = async () => {
+
+      //Vent til periode, dato, lokation og værker er klar -> hvis noget mangler gør ingenting
       if (!period || !date || !location || allArtworks.length === 0) return;
       setLoading(true);
       try {
         // Filtrer først alle værker, så kun de fra den valgte periode er med
         const periodFiltered = filterArtworksByPeriod(allArtworks, period);
+
         // Hent alle events
         const allEvents = await getEvents();
+
         // Find events på samme dato som den valgte dato
         const sameDateEvents = allEvents.filter((event) => event.date === date);
+
         // Find alle kunstværker, der er booket på andre lokationer end den valgte, samme dato
         const conflictingArtworks = sameDateEvents.filter((event) => event.locationId !== location.id).flatMap((event) => event.artworkIds);
+
         // Fjern de konflikterende kunstværker fra de værker, som er fra perioden
         const availableArtworks = periodFiltered.filter((art) => !conflictingArtworks.includes(art.object_number));
 
+        // Laver en liste med de valgte værker som hele objekter (fra allArtworks)
+        // Så vi kan vise billede, titel osv. for valgte værker (fx i popup eller grid)
         const selectedArtworksFull = allArtworks.filter((art) => selectedArtworks.includes(art.object_number));
+
         // Kombiner valgte værker + de filtrerede tilgængelige værker
         const combinedArtworks = [...selectedArtworksFull, ...availableArtworks.filter((art) => !selectedArtworks.includes(art.object_number))];
 
@@ -78,6 +91,9 @@ export default function EventInformation({ date, location, period, defaultData =
         setLoading(false);
       }
     };
+
+    // Hver gang periode, dato, lokation eller allArtworks ændres:
+    // -> filtrer værkerne igen, så vi kun viser værker som er ledige op den valgte dato og lokation.
     filterArtworksByAvailability();
   }, [period, date, location, allArtworks]);
 
@@ -88,16 +104,33 @@ export default function EventInformation({ date, location, period, defaultData =
     setSelectedArtworks((prev) => {
       let updated;
 
+      // Tjekker om værket allerede er valgt (findes i listen prev)
       if (prev.includes(objectNumber)) {
+
+        // Hvis ja: vis en toast-besked om at værket et fjernet
         setArtworkToast("Værk fjernet");
+
+        // Fjern værket fra listen -> lav en ny liste uden dette værk
         updated = prev.filter((i) => i !== objectNumber);
       } else {
+
+        //Hent maks antal værker der må vælges for denne lokation
         const maxArtwork = location?.maxArtworks;
+
+        // Tjek om vi allerede har valgt maks antal værker
         if (prev.length >= maxArtwork) {
+
+          //Hvis ja: vis toast om at maks antal værker et nået
           setArtworkToast(`Maks antal på ${maxArtwork} værker nået`);
+
+          // Gør ingenting -> behold eksisterende liste uændret
           return prev;
         }
+
+        // Hvis vi stadig kan vælge flere: vis tiast om at værket er valgt
         setArtworkToast("Værk valgt");
+
+        // Tilføj værket til listen -> lav ny liste med det valgte værk tilføjet
         updated = [...prev, objectNumber];
       }
 
