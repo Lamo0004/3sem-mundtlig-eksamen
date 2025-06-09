@@ -51,6 +51,7 @@ const cartStore = create(
       },
 
       //Funktion til at tilføje flere billetter i ét hug
+      //Denne bliver kaldt når bruger klikker på "Tilføj til kurv"
       addToCart: (itemsToAdd) => {
         const { items } = get();
         const newItems = [...items];
