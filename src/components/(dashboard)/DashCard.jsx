@@ -9,14 +9,20 @@ import { deleteEvent } from "@/api/events";
 import Popup from "@/components/Popup";
 import artPlaceholder from "@/images/artPlaceholder.png";
 
-const DashCard = ({ event }) => {
-  const [showPopup, setShowPopup] = useState(false); // styrer om popup vises
+const DashCard = ({ event }) => { //DashCard får event som input prop
+  const [showPopup, setShowPopup] = useState(false); // styrer om popup vises - sat til "false" fordi den er skjult
 
+  //Funktion der håndtere sletning af et event. 
   const handleDeleteConfirmed = async () => {
     try {
+      //Vi beder serven om at sætte eventet med dets id.
+      // vi bruger await for at vente på at serveren bliver færdig. 
       await deleteEvent(event.id);
+      //Når eventet er slettet genindlæser vi siden, så den bliver opdateret 
+      // og det slettede event forsinder fra listen. 
       window.location.reload();
     } catch (error) {
+      //Hvis der sker en fejl under sletning, så viser vi en fejlbesked til brugeren.
       alert("Noget gik galt under sletning.");
     }
   };
@@ -26,8 +32,10 @@ const DashCard = ({ event }) => {
   return (
     <div className="relative aspect-[3/2] group w-full">
       <Link href={`/event/${event.id}`}>
-        <Image src={imageUrl} alt={`Eventbillede: ${event.title}`} width={300} height={200} className="w-full h-full object-cover transition duration-300 hover:opacity-40" unoptimized={typeof imageUrl === "string" && imageUrl.startsWith("http")}
+        <Image src={imageUrl} alt={`Eventbillede: ${event.title}`} width={300} height={200} className="w-full h-full object-cover transition duration-300 hover:opacity-40"
+          unoptimized={typeof imageUrl === "string" && imageUrl.startsWith("http")}
         />
+        {/*Hvis billedet kommer fra internettet (http), så beder vi Next.js om IKKE at optimere det*/}
       </Link>
 
       <div className="mt-4 px-2 space-y-1">
